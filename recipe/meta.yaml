@@ -1,0 +1,64 @@
+{% set name = "tree-sitter-javascript" %}
+{% set pypi_name = "tree_sitter_javascript" %}
+{% set version = "0.25.0" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ pypi_name }}/{{ pypi_name }}-{{ version }}.tar.gz
+  sha256: 329b5414874f0588a98f1c291f1b28138286617aa907746ffe55adfdcf963f38
+
+build:
+  number: 0
+  # upstream requires-python >=3.10
+  skip: true  # [py<310]
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ stdlib('c') }}
+  host:
+    - python
+    - pip
+    - setuptools >=42
+    - wheel
+  run:
+    - python
+  run_constrained:
+    # upstream [project.optional-dependencies] 'core' extra: tree-sitter~=0.24
+    # the core binding publishes as conda name tree_sitter (underscore) per its
+    # packaging convention; inert until that package exists on pkgs/main
+    - tree_sitter >=0.24,<1.0
+
+test:
+  requires:
+    - pip
+  imports:
+    - tree_sitter_javascript
+  commands:
+    - pip check
+    # grammar sanity without the 'tree_sitter' binding package (not on pkgs/main):
+    # unwrap the language capsule and read the TSLanguage struct's first int32,
+    # which is the grammar ABI version (LANGUAGE_VERSION in src/parser.c)
+    - python -c "import ctypes; import tree_sitter_javascript; ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p; ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object, ctypes.c_char_p]; ptr = ctypes.pythonapi.PyCapsule_GetPointer(tree_sitter_javascript.language(), b'tree_sitter.Language'); abi = ctypes.c_int32.from_address(ptr).value; assert abi == 15, abi"
+
+about:
+  home: https://github.com/tree-sitter/tree-sitter-javascript
+  summary: JavaScript grammar for tree-sitter
+  description: >-
+    JavaScript grammar for tree-sitter, providing a parser for JavaScript
+    source code built with the tree-sitter incremental parsing toolkit.
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  doc_url: https://github.com/tree-sitter/tree-sitter-javascript#readme
+  dev_url: https://github.com/tree-sitter/tree-sitter-javascript
+
+extra:
+  recipe-maintainers:
+    - rxm7706
+    - killua156
+    - mgorny
