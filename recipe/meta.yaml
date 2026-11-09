@@ -23,7 +23,7 @@ requirements:
   host:
     - python
     - pip
-    - setuptools >=42
+    - setuptools >=62.4.0
     - wheel
   run:
     - python
@@ -31,7 +31,9 @@ requirements:
     # upstream [project.optional-dependencies] 'core' extra: tree-sitter~=0.24
     # the core binding publishes as conda name tree_sitter (underscore) per its
     # packaging convention; inert until that package exists on pkgs/main
-    - tree_sitter >=0.24,<1.0
+    # upstream 'core' extra says tree-sitter~=0.24, but this grammar is ABI 15,
+    # which needs tree-sitter >=0.25
+    - tree_sitter >=0.25,<1.0
 
 test:
   requires:
